@@ -25,9 +25,11 @@ def search_cell(session, data):
     if result is None:
         return
 
+    lat, lon = result.position
+
     return {
-        'lat': quantize(result.lat),
-        'lon': quantize(result.lon),
+        'lat': lat,
+        'lon': lon,
         'accuracy': 35000,
     }
 

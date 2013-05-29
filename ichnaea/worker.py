@@ -1,10 +1,12 @@
 import threading
+from decimal import Decimal
 
 from colander.iso8601 import parse_date
 
 from ichnaea.db import Measure, RADIO_TYPE
 from ichnaea.decimaljson import dumps, loads, to_precise_int
 from ichnaea.db import MeasureDB
+
 
 _LOCALS = threading.local()
 _LOCALS.dbs = {}
@@ -48,8 +50,7 @@ def insert_measures(measures, db_instance=None, sqluri=None):
         if isinstance(time, basestring):
             time = parse_date(time)
         measure.time = time
-        measure.lat = to_precise_int(data['lat'])
-        measure.lon = to_precise_int(data['lon'])
+        measure.position = data['lat'], data['lon']
         measure.accuracy = data['accuracy']
         measure.altitude = data['altitude']
         measure.altitude_accuracy = data['altitude_accuracy']

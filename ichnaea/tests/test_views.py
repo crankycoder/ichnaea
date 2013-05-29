@@ -1,20 +1,27 @@
 from datetime import datetime
-from unittest2 import TestCase
 from webtest import TestApp
 
 from ichnaea import main
 from ichnaea.db import Cell, Measure
 from ichnaea.decimaljson import loads
+from ichnaea.tests.support import TEST_DB, TestSpatialite
 
+
+_APP = None
 
 def _make_app():
+    global _APP
+    if _APP is not None:
+        return _APP
+
     global_config = {}
-    wsgiapp = main(global_config, celldb='sqlite://', measuredb='sqlite://',
+    wsgiapp = main(global_config, celldb=TEST_DB, measuredb= TEST_DB,
                    batch_size=-1)
-    return TestApp(wsgiapp)
+    _APP = TestApp(wsgiapp)
+    return _APP
 
 
-class TestSearch(TestCase):
+class TestSearch(TestSpatialite):
 
     def test_ok(self):
         app = _make_app()
@@ -81,7 +88,7 @@ class TestSearch(TestCase):
         self.assertTrue('errors' in res.json)
 
 
-class TestMeasure(TestCase):
+class TestMeasure(TestSpatialite):
 
     def test_ok_cell(self):
         app = _make_app()
@@ -100,8 +107,7 @@ class TestMeasure(TestCase):
         result = session.query(Measure).all()
         self.assertEqual(len(result), 1)
         item = result[0]
-        self.assertEqual(item.lat, 123456781)
-        self.assertEqual(item.lon, 234567892)
+        self.assertEqual(item.position, (12.3456781, 23.4567892))
         self.assertEqual(item.accuracy, 10)
         self.assertEqual(item.altitude, 123)
         self.assertEqual(item.altitude_accuracy, 7)
@@ -131,8 +137,7 @@ class TestMeasure(TestCase):
         result = session.query(Measure).all()
         self.assertEqual(len(result), 1)
         item = result[0]
-        self.assertEqual(item.lat, 123456781)
-        self.assertEqual(item.lon, 234567892)
+        self.assertEqual(item.position, (12.3456781, 23.4567892))
         self.assertEqual(item.accuracy, 17)
         self.assertEqual(item.altitude, 0)
         self.assertEqual(item.altitude_accuracy, 0)
@@ -232,7 +237,7 @@ class TestMeasure(TestCase):
         self.assertTrue('errors' in res.json)
 
 
-class TestHeartbeat(TestCase):
+class TestHeartbeat(TestSpatialite):
 
     def test_ok(self):
         app = _make_app()

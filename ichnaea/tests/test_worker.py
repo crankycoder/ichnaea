@@ -6,20 +6,33 @@ from webtest import TestApp
 
 from ichnaea import main
 from ichnaea.worker import _get_db
+from ichnaea.tests.support import TEST_DB, TestSpatialite
 
 
-class TestWorker(unittest.TestCase):
+class TestWorker(TestSpatialite):
+
+    def setUp(self):
+        super(TestWorker, self).setUp()
+        self.apps = []
+
+    def tearDown(self):
+        for app in self.apps:
+            app.app.registry.celldb.engine.dispose()
+            app.app.registry.measuredb.engine.dispose()
+        super(TestWorker, self).tearDown()
 
     def _make_one(self, **kw):
         kw['redis.host'] = '127.0.0.1'
         kw['redis.port'] = -1
-        app = main({}, celldb='sqlite://', measuredb='sqlite://',
+        app = main({}, celldb=TEST_DB, measuredb=TEST_DB,
                    async=True, **kw)
-        return TestApp(app)
+        app = TestApp(app)
+        self.apps.append(app)
+        return app
 
     def test_get_db(self):
-        db = _get_db('sqlite:///:memory:')
-        self.assertTrue(db is _get_db('sqlite:///:memory:'))
+        db = _get_db(TEST_DB)
+        self.assertTrue(db is _get_db(TEST_DB))
 
     def test_async_measure(self):
         app = self._make_one(batch_size=10)

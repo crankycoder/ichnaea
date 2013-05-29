@@ -32,6 +32,10 @@ def quantize(value):
     return (Decimal(value) / FACTOR).quantize(EXPONENT)
 
 
+def round(value):
+    return Decimal(value).quantize(EXPONENT)
+
+
 def to_precise_int(value):
     if isinstance(value, str):
         value = Decimal(value)

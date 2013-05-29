@@ -15,8 +15,11 @@ requires = [
     'statsd-client',
     'chaussette',
     'konfig',
-    'circus'
+    'circus',
+    'geoalchemy2',
+    'psycopg2',
 ]
+
 
 if sys.version_info < (2, 7):
     requires.append('argparse')
@@ -27,6 +30,8 @@ test_requires = requires + [
     'nose',
     'unittest2',
     'Webtest',
+    'pyspatialite',
+    'pysqlite'
 ]
 
 with open(os.path.join(here, 'README.rst')) as f:

@@ -4,6 +4,10 @@ from sqlalchemy import DateTime, Integer, LargeBinary, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+from ichnaea.decimaljson import round
+
 _Model = declarative_base()
 
 
@@ -27,9 +31,10 @@ class Cell(_Model):
     )
 
     id = Column(Integer, primary_key=True)
+
     # lat/lon * decimaljson.FACTOR
-    lat = Column(Integer)
-    lon = Column(Integer)
+    _position = Column(Geometry('POINT'))
+
     # mapped via RADIO_TYPE
     radio = Column(SmallInteger)
     # int in the range 0-1000
@@ -42,6 +47,16 @@ class Cell(_Model):
     # int in the range 0-511
     psc = Column(SmallInteger)
     range = Column(Integer)
+
+    def _get_pos(self):
+        shape = to_shape(self._position)
+        # XXX floats :S
+        return shape.x, shape.y
+
+    def _set_pos(self, value):
+        self._position = 'POINT (%.7f %.7f)' % (value[0], value[1])
+
+    position = property(_get_pos, _set_pos)
 
 cell_table = Cell.__table__
 
@@ -56,9 +71,7 @@ class Measure(_Model):
     }
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    # lat/lon * decimaljson.FACTOR
-    lat = Column(Integer)
-    lon = Column(Integer)
+    _position = Column(Geometry('POINT'))
     time = Column(DateTime)
     accuracy = Column(SmallInteger)
     altitude = Column(SmallInteger)
@@ -68,6 +81,20 @@ class Measure(_Model):
     cell = Column(LargeBinary)
     wifi = Column(LargeBinary)
 
+    def _get_pos(self):
+        shape = to_shape(self._position)
+        # XXX floats :S
+
+        return shape.x, shape.y
+
+    def _set_pos(self, value):
+        self._position = 'POINT (%.7f %.7f)' % (value[0], value[1])
+
+    position = property(_get_pos, _set_pos)
+
+
+
+
 measure_table = Measure.__table__
 
 
@@ -75,7 +102,8 @@ class BaseDB(object):
 
     def __init__(self, sqluri):
         options = dict(pool_recycle=3600, pool_size=10, pool_timeout=10)
-        if sqluri.startswith('sqlite'):
+        scheme = sqluri.split(':')[0]
+        if scheme in ('sqlite+pysqlite', 'sqlite', 'postgres'):
             del options['pool_size']
             del options['pool_timeout']
         self.engine = create_engine(sqluri, **options)
