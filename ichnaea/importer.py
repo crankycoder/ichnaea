@@ -6,7 +6,6 @@ from konfig import Config
 from sqlalchemy import func
 
 from ichnaea.db import CellDB, Cell
-from ichnaea.decimaljson import to_precise_int
 
 
 def _int(value):
@@ -27,8 +26,7 @@ def load_file(settings, source_file, batch_size=10000):
         # insert test data for @nsm
         session.execute(cell_insert, [{
             "id": 1,
-            "lat": 191757100,
-            "lon": 729645000,
+            "position": (19.1757100, 72.9645000),
             "radio": 0,
             "mcc": 405,
             "mnc": 15,
@@ -39,8 +37,7 @@ def load_file(settings, source_file, batch_size=10000):
         # insert test data for @kanru
         session.execute(cell_insert, [{
             "id": 2,
-            "lat": 250324090,
-            "lon": 1215673029,
+            "position": (25.0324090, 12.15673029),
             "radio": 0,
             "mcc": 466,
             "mnc": 92,
@@ -74,8 +71,7 @@ def load_file(settings, source_file, batch_size=10000):
                     id=id_,
                     # TODO figure out if we have cdma networks
                     radio=radio,
-                    lat=to_precise_int(fields[2]),
-                    lon=to_precise_int(fields[3]),
+                    position=(fields[2], fields[3]),
                     mcc=mcc,
                     mnc=mnc,
                     lac=_int(fields[6]),

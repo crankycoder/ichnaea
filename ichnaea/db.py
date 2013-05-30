@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Index
 from sqlalchemy import DateTime, Integer, LargeBinary, SmallInteger
@@ -6,7 +8,8 @@ from sqlalchemy.orm import sessionmaker
 
 from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
-from ichnaea.decimaljson import round
+from colander.iso8601 import UTC
+
 
 _Model = declarative_base()
 
@@ -58,6 +61,7 @@ class Cell(_Model):
 
     position = property(_get_pos, _set_pos)
 
+
 cell_table = Cell.__table__
 
 
@@ -72,7 +76,7 @@ class Measure(_Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     _position = Column(Geometry('POINT'))
-    time = Column(DateTime)
+    _time = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     accuracy = Column(SmallInteger)
     altitude = Column(SmallInteger)
     altitude_accuracy = Column(SmallInteger)
@@ -83,8 +87,6 @@ class Measure(_Model):
 
     def _get_pos(self):
         shape = to_shape(self._position)
-        # XXX floats :S
-
         return shape.x, shape.y
 
     def _set_pos(self, value):
@@ -92,7 +94,17 @@ class Measure(_Model):
 
     position = property(_get_pos, _set_pos)
 
+    # postgres stores naive dates without timezones, but they are UTC
+    # here we're removing the tzinfo before storage and putting it
+    # back when accessing the value
+    def _get_time(self):
+        return self._time.replace(tzinfo=UTC)
 
+    def _set_time(self, value):
+        value = value.replace(tzinfo=None)
+        self._time = value
+
+    time = property(_get_time, _set_time)
 
 
 measure_table = Measure.__table__

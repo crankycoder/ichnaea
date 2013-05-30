@@ -1,6 +1,8 @@
 from datetime import datetime
 from webtest import TestApp
 
+from colander.iso8601 import parse_date
+
 from ichnaea import main
 from ichnaea.db import Cell, Measure
 from ichnaea.decimaljson import loads
@@ -9,13 +11,14 @@ from ichnaea.tests.support import TEST_DB, TestSpatialite
 
 _APP = None
 
+
 def _make_app():
     global _APP
     if _APP is not None:
         return _APP
 
     global_config = {}
-    wsgiapp = main(global_config, celldb=TEST_DB, measuredb= TEST_DB,
+    wsgiapp = main(global_config, celldb=TEST_DB, measuredb=TEST_DB,
                    batch_size=-1)
     _APP = TestApp(wsgiapp)
     return _APP
@@ -27,8 +30,7 @@ class TestSearch(TestSpatialite):
         app = _make_app()
         session = app.app.registry.celldb.session()
         cell = Cell()
-        cell.lat = 123456781
-        cell.lon = 234567892
+        cell.position = 12.3456781, 23.4567892
         cell.radio = 0
         cell.mcc = 123
         cell.mnc = 1
@@ -193,6 +195,8 @@ class TestMeasure(TestSpatialite):
     def test_time(self):
         app = _make_app()
         time = "2012-03-15T11:12:13.456Z"
+        wanted = parse_date(time)
+
         app.post_json(
             '/v1/submit', {"items": [
                 {"lat": 1.0, "lon": 2.0, "wifi": [{"mac": "a"}], "time": time},
@@ -204,8 +208,7 @@ class TestMeasure(TestSpatialite):
         self.assertEqual(len(result), 2)
         for item in result:
             if '"mac": "a"' in item.wifi:
-                self.assertEqual(
-                    item.time, datetime(2012, 3, 15, 11, 12, 13, 456000))
+                self.assertEqual(item.time, wanted)
             else:
                 self.assertEqual(
                     item.time.date(), datetime.utcnow().date())

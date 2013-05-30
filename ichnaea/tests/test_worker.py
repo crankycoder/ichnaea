@@ -1,4 +1,3 @@
-import unittest
 import time
 
 from redis.client import BasePipeline

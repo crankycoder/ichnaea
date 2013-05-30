@@ -1,16 +1,18 @@
 import os
 from tempfile import mkstemp
-from unittest import TestCase
+
+from ichnaea.tests.support import TestSpatialite, TEST_DB
+
 
 LINE = '9;2;1.23456;-2.3;1;2;3;4;0;0;2013-04-20 02:59:43;2013-04-20 02:59:43;1'
 
 
-class TestLoadFile(TestCase):
+class TestLoadFile(TestSpatialite):
 
     def _make_one(self):
         from ichnaea.importer import load_file
         tmpfile = mkstemp()
-        settings = {'celldb': 'sqlite://'}
+        settings = {'celldb': TEST_DB}
         return load_file, settings, tmpfile
 
     def test_no_lines(self):
@@ -42,7 +44,7 @@ class TestLoadFile(TestCase):
         self.assertEqual(counter, 1)
 
 
-class TestMain(TestCase):
+class TestMain(TestSpatialite):
 
     def _make_one(self):
         from ichnaea.importer import main
@@ -53,8 +55,8 @@ class TestMain(TestCase):
     def test_main(self):
         config, data, func = self._make_one()
         os.write(config[0], '[ichnaea]\n')
-        os.write(config[0], 'celldb=sqlite://\n')
-        os.write(config[0], 'measuredb=sqlite://\n')
+        os.write(config[0], 'celldb=%s\n' % TEST_DB)
+        os.write(config[0], 'measuredb=%s\n' % TEST_DB)
         os.write(data[0], LINE)
         counter = func(['main', config[1], data[1]])
         self.assertEqual(counter, 1)

@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from cornice import Service
 from pyramid.httpexceptions import HTTPError, HTTPNoContent
 from pyramid.response import Response

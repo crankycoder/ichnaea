@@ -1,7 +1,5 @@
 from statsd import StatsdTimer
-
 from ichnaea.db import Cell, RADIO_TYPE
-from ichnaea.decimaljson import quantize
 
 
 def search_cell(session, data):

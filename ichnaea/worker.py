@@ -1,10 +1,9 @@
 import threading
-from decimal import Decimal
 
 from colander.iso8601 import parse_date
 
 from ichnaea.db import Measure, RADIO_TYPE
-from ichnaea.decimaljson import dumps, loads, to_precise_int
+from ichnaea.decimaljson import dumps, loads
 from ichnaea.db import MeasureDB
 
 

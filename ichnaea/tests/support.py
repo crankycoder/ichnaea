@@ -1,8 +1,7 @@
-import sys
 import unittest2
 
-import pyspatialite
-import pysqlite2
+#import pyspatialite
+#import pysqlite2
 
 
 #TEST_DB = 'sqlite+pysqlite:///:memory:'
@@ -13,11 +12,14 @@ class TestSpatialite(unittest2.TestCase):
     def setUp(self):
         #self.old_module = sys.modules['pysqlite2']
         #sys.modules['pysqlite2'] = pyspatialite
-        pass
+        self._session = None
 
     def _get_session(self):
+        if self._session is not None:
+            return self._session
         from ichnaea.db import MeasureDB
-        return MeasureDB(TEST_DB).session()
+        self._session = MeasureDB(TEST_DB).session()
+        return self._session
 
     def tearDown(self):
         #sys.modules['pysqlite2'] = self.old_module
@@ -25,3 +27,4 @@ class TestSpatialite(unittest2.TestCase):
         session.execute('delete from measure')
         session.execute('delete from cell')
         session.commit()
+        session.bind.dispose()
