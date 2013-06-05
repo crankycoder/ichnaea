@@ -67,6 +67,7 @@ they are old.
 
 for each location which timestamps older than a month: purge old measure
 """
+from shapely.geometry import Point, MultiPoint
 
 
 class LocDB(object):
@@ -83,26 +84,21 @@ class LocDB(object):
         for neighbour in neighbours:
             if neighbour.id in self.locs:
                 found.append(neighbour)
-        return self._gravity(found)
-
-    def _gravity(self, locations):
-        lons = [location.lon for location in locations]
-        lats = [location.lat for location in locations]
-        len_ = len(locations)
-        return sum(lons) / len_, sum(lats) / len_
-
+        selection = MultiPoint(found)
+        return selection.centroid
 
 # i am here, here's what I see.
 #
 
-class Location(object):
+class Location(Point):
     def __init__(self, id, lon, lat, ss=100):
+        Point.__init__(self, lon, lat)
         self.id = id
         self.lon, self.lat = lon, lat
         self.neighbours = []
         self.ss = 100
 
-    def add_neighor(self, neighbour):
+    def add_neighbour(self, neighbour):
         self.neighbours.append(neighbour)
 
 
@@ -116,7 +112,7 @@ wifi_2 = Location(3, lon - 2.3, lat + 0.9, 15)
 my_place = Location(4, lon - 1.1, lat + 1.2, 18)
 
 for loc in (cell_tower, wifi_3, wifi_2):
-    my_place.add_neighor(loc)
+    my_place.add_neighbour(loc)
 
 # crowdsourcing it
 db = LocDB()
