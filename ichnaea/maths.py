@@ -67,34 +67,43 @@ they are old.
 
 for each location which timestamps older than a month: purge old measure
 """
-from matplotlib import pyplot
+import random
+
+from matplotlib import pyplot, colors
 from shapely.geometry import Point, MultiPoint
+from descartes.patch import PolygonPatch
 
-#from matplotlib.figure import SIZE
 
-COLOR = {
-    True:  '#6699cc',
-    False: '#ffcc33'
-    }
+_PICKED = []
 
-def v_color(ob):
-    return COLOR[ob.is_simple]
+def plot_coords(ax, ob, color=None, char='o'):
+    if color is None:
+        color = random.choice(colors.cnames.values())
+        while color in _PICKED:
+            color = random.choice(colors.cnames.values())
+        _PICKED.append(color)
 
-def plot_coords(ax, ob, color='#999999'):
     x, y = ob.xy
-    ax.plot(x, y, 'o', color=color, zorder=1)
+    ax.plot(x, y, char, color=color, zorder=1, label=ob.id, markersize=12)
 
-def plot_bounds(ax, ob):
-    x, y = zip(*list((p.x, p.y) for p in ob.boundary))
-    ax.plot(x, y, 'o', color='#000000', zorder=1)
 
-def plot_lines(ax, ob):
-    for line in ob:
-        x, y = line.xy
-        ax.plot(x, y, color=v_color(ob), alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
+fig = pyplot.figure(1, figsize=(10, 10), dpi=90)   #figsize=SIZE, dpi=90)
 
-fig = pyplot.figure(1, dpi=90)   #figsize=SIZE, dpi=90)
 
+class Location(Point):
+    def __init__(self, id, lon, lat, ss=100):
+        Point.__init__(self, lon, lat)
+        self.id = id
+        self.lon, self.lat = lon, lat
+        self.neighbours = []
+        self.ss = 100
+
+    def add_neighbour(self, neighbour):
+        self.neighbours.append(neighbour)
+
+    @classmethod
+    def from_point(cls, point, label=''):
+        return cls(label, point.x, point.y)
 
 
 class LocDB(object):
@@ -112,38 +121,27 @@ class LocDB(object):
             if neighbour.id in self.locs:
                 found.append(neighbour)
         selection = MultiPoint(found)
-        return selection.centroid
+        return (Location.from_point(selection.centroid, 'guess'),
+                selection.envelope)
+
 
 # i am here, here's what I see.
-#
-
-class Location(Point):
-    def __init__(self, id, lon, lat, ss=100):
-        Point.__init__(self, lon, lat)
-        self.id = id
-        self.lon, self.lat = lon, lat
-        self.neighbours = []
-        self.ss = 100
-
-    def add_neighbour(self, neighbour):
-        self.neighbours.append(neighbour)
-
-
-ax = fig.add_subplot(121)
-
-
+ax = fig.add_subplot(1, 1, 1)
 my_real_location = lon, lat = 23.4, 45.6
 
 # what I see around me
-cell_tower = Location(1, lon + 1.4, lat + 3.2, 20)
-wifi_3 = Location(2, lon + 1.8, lat - 1.8, 30)
-wifi_2 = Location(3, lon - 2.3, lat + 0.9, 15)
-my_place = Location(4, lon - 1.1, lat + 1.2, 18)
+cell_tower = Location('cell tower', lon + 1.4, lat + 3.2, 20)
+wifi_3 = Location('wifi 1', lon + 1.8, lat - 1.8, 30)
+wifi_2 = Location('wifi 2', lon - 2.3, lat + 0.9, 15)
+wifi_4 = Location('wifi 3', lon - 2.1, lat + 1.9, 15)
+wifi_1 = Location('wifi 4', lon - 0.2, lat - 0.4, 30)
 
 
-plot_coords(ax, my_place, 'red')
+# my exact location
+my_place = Location('Exact location', lon, lat, 18.)
+plot_coords(ax, my_place, 'red', char='v')
 
-for loc in (cell_tower, wifi_3, wifi_2):
+for loc in (cell_tower, wifi_3, wifi_2, wifi_1, wifi_4):
     my_place.add_neighbour(loc)
     plot_coords(ax, loc)
 
@@ -153,8 +151,27 @@ db = LocDB()
 db.crowdsource(my_place)
 
 # what I see around me, and I don't have my location
-guess = db.findme(cell_tower, wifi_3, wifi_2)
-plot_coords(ax, guess, 'green')
+guess, envelope = db.findme(cell_tower, wifi_3, wifi_2)
+plot_coords(ax, guess, 'green', char='^')
+
+patch = PolygonPatch(envelope, facecolor='blue',
+        edgecolor='black', alpha=0.2, zorder=2)
+ax.add_patch(patch)
+
+handles, labels = ax.get_legend_handles_labels()
+
+
+# reverse the order
+ax.legend(handles[::-1], labels[::-1])
+
+handles2 = []
+labels2 = []
+
+for handle, label in zip(handles, labels):
+    if 'wifi' in label:
+        continue
+    handles2.append(handle)
+    labels2.append(label)
+ax.legend(handles2, labels2, loc=3)
 
 pyplot.show()
-
