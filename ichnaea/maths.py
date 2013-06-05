@@ -67,7 +67,34 @@ they are old.
 
 for each location which timestamps older than a month: purge old measure
 """
+from matplotlib import pyplot
 from shapely.geometry import Point, MultiPoint
+
+#from matplotlib.figure import SIZE
+
+COLOR = {
+    True:  '#6699cc',
+    False: '#ffcc33'
+    }
+
+def v_color(ob):
+    return COLOR[ob.is_simple]
+
+def plot_coords(ax, ob, color='#999999'):
+    x, y = ob.xy
+    ax.plot(x, y, 'o', color=color, zorder=1)
+
+def plot_bounds(ax, ob):
+    x, y = zip(*list((p.x, p.y) for p in ob.boundary))
+    ax.plot(x, y, 'o', color='#000000', zorder=1)
+
+def plot_lines(ax, ob):
+    for line in ob:
+        x, y = line.xy
+        ax.plot(x, y, color=v_color(ob), alpha=0.7, linewidth=3, solid_capstyle='round', zorder=2)
+
+fig = pyplot.figure(1, dpi=90)   #figsize=SIZE, dpi=90)
+
 
 
 class LocDB(object):
@@ -102,6 +129,8 @@ class Location(Point):
         self.neighbours.append(neighbour)
 
 
+ax = fig.add_subplot(121)
+
 
 my_real_location = lon, lat = 23.4, 45.6
 
@@ -111,8 +140,13 @@ wifi_3 = Location(2, lon + 1.8, lat - 1.8, 30)
 wifi_2 = Location(3, lon - 2.3, lat + 0.9, 15)
 my_place = Location(4, lon - 1.1, lat + 1.2, 18)
 
+
+plot_coords(ax, my_place, 'red')
+
 for loc in (cell_tower, wifi_3, wifi_2):
     my_place.add_neighbour(loc)
+    plot_coords(ax, loc)
+
 
 # crowdsourcing it
 db = LocDB()
@@ -120,4 +154,7 @@ db.crowdsource(my_place)
 
 # what I see around me, and I don't have my location
 guess = db.findme(cell_tower, wifi_3, wifi_2)
-print guess
+plot_coords(ax, guess, 'green')
+
+pyplot.show()
+
