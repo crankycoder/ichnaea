@@ -20,6 +20,13 @@ from ichnaea.decimaljson import (
 from ichnaea.tests.base import CeleryTestCase
 
 
+class TestDummy(CeleryTestCase):
+    def test_dummy(self):
+        from ichnaea.service.submit.tasks import dummy_task
+        result = dummy_task.delay()
+        # Failure should give me a 0 result
+        self.assertEqual(result.get(), 0)
+
 class TestInsert(CeleryTestCase):
 
     def test_cell(self):

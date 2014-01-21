@@ -41,8 +41,14 @@ class DatabaseTask(Task):
 
     def __call__(self, *args, **kw):
         with get_client('ichnaea').timer("task." + self.shortname):
-            result = super(DatabaseTask, self).__call__(*args, **kw)
-        return result
+            try:
+                result = super(DatabaseTask, self).__call__(*args, **kw)
+            except IntegrityError as exc:  # pragma: no cover
+                logger.exception('error')
+                return 0
+            except Exception as exc:  # pragma: no cover
+                raise self.retry(exc=exc)
+            return result
 
     def db_session(self):
         # returns a context manager

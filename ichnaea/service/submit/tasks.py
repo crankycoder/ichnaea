@@ -113,19 +113,19 @@ def process_cell_measure(session, measure_data, entries, userid=None):
 
 
 @celery.task(base=DatabaseTask, bind=True)
+def dummy_task(self):
+    # raise a dummy exception
+    raise IntegrityError("dummy statement", {}, None)
+
+
+@celery.task(base=DatabaseTask, bind=True)
 def insert_cell_measure(self, measure_data, entries, userid=None):
-    try:
-        cell_measures = []
-        with self.db_session() as session:
-            cell_measures = process_cell_measure(
-                session, measure_data, entries, userid=userid)
-            session.commit()
-        return len(cell_measures)
-    except IntegrityError as exc:  # pragma: no cover
-        logger.exception('error')
-        return 0
-    except Exception as exc:  # pragma: no cover
-        raise self.retry(exc=exc)
+    cell_measures = []
+    with self.db_session() as session:
+        cell_measures = process_cell_measure(
+            session, measure_data, entries, userid=userid)
+        session.commit()
+    return len(cell_measures)
 
 
 def convert_frequency(entry):
@@ -209,14 +209,8 @@ def process_wifi_measure(session, measure_data, entries, userid=None):
 @celery.task(base=DatabaseTask, bind=True)
 def insert_wifi_measure(self, measure_data, entries, userid=None):
     wifi_measures = []
-    try:
-        with self.db_session() as session:
-            wifi_measures = process_wifi_measure(
-                session, measure_data, entries, userid=userid)
-            session.commit()
-        return len(wifi_measures)
-    except IntegrityError as exc:
-        logger.exception('error')
-        return 0
-    except Exception as exc:  # pragma: no cover
-        raise self.retry(exc=exc)
+    with self.db_session() as session:
+        wifi_measures = process_wifi_measure(
+            session, measure_data, entries, userid=userid)
+        session.commit()
+    return len(wifi_measures)
