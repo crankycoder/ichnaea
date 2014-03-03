@@ -266,7 +266,6 @@ def create_cell_measure(utcnow, entry):
 
     time = decode_datetime(entry.get('time', ''))
     time = time.replace(day=1, hour=0, minute=0, second=0)
-    utcnow = utcnow.replace(day=1, hour=0, minute=0, second=0)
     return CellMeasure(
         measure_id=entry.get('measure_id'),
         created=utcnow,
@@ -400,8 +399,6 @@ def process_wifi_measures(session, entries, userid=None):
     wifi_keys = set([e['key'] for e in entries])
 
     utcnow = datetime.datetime.utcnow()
-    utcnow = utcnow.replace(day=1, hour=0,
-                            minute=0, tzinfo=iso8601.UTC)
 
     # did we get measures for blacklisted wifis?
     blacked = session.query(WifiBlacklist.key).filter(

@@ -53,7 +53,7 @@ class TestSubmit(CeleryAppTestCase):
         self.assertEqual(len(cell_result), 1)
         item = cell_result[0]
         self.assertEqual(item.measure_id, measure_result[0].id)
-        self.assertEqual(item.created.date(), expected_today)
+        self.assertEqual(item.created.date(), today)
         self.assertEqual(item.time, expected_dt)
         self.assertEqual(item.lat, 123456781)
         self.assertEqual(item.lon, 234567892)
@@ -110,7 +110,7 @@ class TestSubmit(CeleryAppTestCase):
         self.assertEqual(len(wifi_result), 2)
         item = wifi_result[0]
         self.assertEqual(item.measure_id, measure_result[0].id)
-        self.assertEqual(item.created.date(), expected_today)
+        self.assertEqual(item.created.date(), today)
         self.assertEqual(item.time, expected_dt)
         self.assertEqual(item.lat, 123456781)
         self.assertEqual(item.lon, 234567892)
@@ -122,7 +122,7 @@ class TestSubmit(CeleryAppTestCase):
         self.assertEqual(item.signal, 0)
         item = wifi_result[1]
         self.assertEqual(item.measure_id, measure_result[0].id)
-        self.assertEqual(item.created.date(), expected_today)
+        self.assertEqual(item.created.date(), today)
         self.assertEqual(item.lat, 123456781)
         self.assertEqual(item.lon, 234567892)
 
@@ -187,14 +187,14 @@ class TestSubmit(CeleryAppTestCase):
         wifis = dict([(w.key, (w.created, w.time)) for w in result])
         today = datetime.utcnow().date()
 
-        expected_tday = time.replace(day=1, hour=0, minute=0, second=0)
-        expected_today = today.replace(day=1)
+        observed_tday = time.replace(day=1, hour=0, minute=0, second=0)
+        observed_today = today.replace(day=1)
 
-        self.assertEqual(wifis['a'][0].date(), expected_today)
-        self.assertEqual(wifis['a'][1], expected_tday)
+        self.assertEqual(wifis['a'][0].date(), today)
+        self.assertEqual(wifis['a'][1], observed_tday)
 
-        self.assertEqual(wifis['b'][0].date(), expected_today)
-        self.assertEqual(wifis['b'][1].date(), expected_today)
+        self.assertEqual(wifis['b'][0].date(), today)
+        self.assertEqual(wifis['b'][1].date(), observed_today)
 
     def test_time_short_format(self):
         app = self.app
