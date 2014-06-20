@@ -1,3 +1,5 @@
+.. _deploy:
+
 ======================
 Installing / Deploying
 ======================
@@ -16,25 +18,32 @@ just three changes you need to do. For example via the my.cnf:
     innodb_strict_mode=on
     sql-mode="STRICT_TRANS_TABLES"
 
+For you local development environment, you might need to add one additional
+setting to successfully run the tests. This is not required in production:
+
+.. code-block:: ini
+
+    [mysqld]
+    max_connections=10000
+
 
 Heka configuration
 ==================
 
 The default configuration in ichnaea.ini assumes that you are running
-a hekad instance listening for UDP messages on port 5565.  This is
+a hekad instance listening for UDP messages on port 5565. This is
 a pretty standard heka configuration, so if you have any problems, you
 should consult the heka documentation to verify that messages are
 being captured properly by hekad.
 
 To get heka to log exceptions to Sentry, you will need to obtain the
-DSN for your Sentry instance.  Edit ichnaea.ini in the
-`heka_plugin_raven` section with your actual DSN and exceptions should
-start appearing in Sentry.
+DSN for your Sentry instance. Edit ichnaea.ini in the `heka_plugin_raven`
+section with your actual DSN and exceptions should start appearing in Sentry.
 
 Code
 ====
 
-Run the following commands to download the database and the server:
+Run the following commands to install the software:
 
 .. code-block:: bash
 
@@ -127,7 +136,7 @@ Startup graphite-web by using this ::
     export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH
     python /opt/graphite/bin/run-graphite-devel-server.py /opt/graphite
 
-Startup hekad 0.4.2 with ::
+Startup hekad with ::
 
     hekad --config=/your/ichnaea/path/hekad.toml
 

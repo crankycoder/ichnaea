@@ -75,8 +75,21 @@ CELLID_LAC = -2
 # Symbolic constant used in specs passed to normalization functions.
 REQUIRED = object()
 
-invalid_wifi_regex = re.compile("(?!(0{12}|f{12}))")
-valid_wifi_regex = re.compile("([0-9a-fA-F]{12})")
+# We use a documentation-only multi-cast address as a test key
+# http://tools.ietf.org/html/rfc7042#section-2.1.1
+WIFI_TEST_KEY = "01005e901000"
+INVALID_WIFI_REGEX = re.compile("(?!(0{12}|f{12}|%s))" % WIFI_TEST_KEY)
+VALID_WIFI_REGEX = re.compile("([0-9a-fA-F]{12})")
+
+ALL_VALID_MCCS = frozenset(
+    [int(country.mcc)
+     for country in mobile_codes._countries()
+     if isinstance(country.mcc, str)] +
+    [int(code)
+     for country in mobile_codes._countries()
+     if isinstance(country.mcc, tuple)
+     for code in country.mcc]
+)
 
 CellKey = namedtuple('CellKey', 'radio mcc mnc lac cid')
 CellKeyPsc = namedtuple('CellKey', 'radio mcc mnc lac cid psc')
@@ -106,8 +119,8 @@ def decode_datetime(obj):
 
 
 def valid_wifi_pattern(key):
-    return invalid_wifi_regex.match(key) and \
-        valid_wifi_regex.match(key) and len(key) == 12
+    return INVALID_WIFI_REGEX.match(key) and \
+        VALID_WIFI_REGEX.match(key) and len(key) == 12
 
 
 def normalized_wifi_key(key):
@@ -209,7 +222,9 @@ def normalized_wifi_dict(d):
     Returns a normalized copy of the provided wifi dict d,
     or None if the dict was invalid.
     """
-    d = normalized_dict(d, dict(signal=(-200, -1, 0)))
+    d = normalized_dict(
+        d, dict(signal=(-200, -1, 0),
+                signalToNoiseRatio=(0, 100, 0)))
 
     if d is None:
         return None
@@ -258,6 +273,10 @@ def normalized_cell_dict(d, default_radio=-1):
                 psc=(0, 512, -1)))
 
     if d is None:
+        return None
+
+    # Tighten the MCC check even more
+    if d['mcc'] not in ALL_VALID_MCCS:
         return None
 
     if d['radio'] == -1 and default_radio != -1:
@@ -473,8 +492,6 @@ class CellMeasure(_Model):
         {
             'mysql_engine': 'InnoDB',
             'mysql_charset': 'utf8',
-            'mysql_row_format': 'compressed',
-            'mysql_key_block_size': '4',
         }
     )
 
@@ -589,8 +606,6 @@ class WifiMeasure(_Model):
         {
             'mysql_engine': 'InnoDB',
             'mysql_charset': 'utf8',
-            'mysql_row_format': 'compressed',
-            'mysql_key_block_size': '4',
         }
     )
 
