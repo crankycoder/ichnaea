@@ -7,9 +7,16 @@ notifications:
   email:
     - hschlichting@mozilla.com
 
+
 script:
     - make build
     - make test
 
 services:
   - redis-server
+
+after_script:
+  - make install_vaurien_deps
+# - make start_ichnaea
+  - make start_mysql
+  - make start_redis

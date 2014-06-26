@@ -1,0 +1,3 @@
+requests==2.3.0
+vaurien==1.9
+vaurienclient==1.1

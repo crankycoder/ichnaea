@@ -48,6 +48,9 @@ $(PYTHON):
 	virtualenv .
 	bin/pip install -U pip
 
+install_vaurien_deps:
+	$(INSTALL) -r requirements/vaurien.txt
+
 build: $(PYTHON) mysql
 	$(INSTALL) -r requirements/prod.txt
 	$(INSTALL) -r requirements/test.txt
