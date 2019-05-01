@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.6-slim-stretch
 
 # add a non-privileged user for installing and running
 # the application
@@ -21,19 +21,14 @@ path-exclude=/usr/share/man/*\n\
 path-exclude=/usr/share/locale/*\n\
 " > /etc/dpkg/dpkg.cfg.d/apt-no-docs
 
-# Add MySQL apt repo & GPG key
-RUN echo 'deb http://repo.mysql.com/apt/debian/ jessie mysql-5.7' > \
-    /etc/apt/sources.list.d/mysql.list && \
-    apt-key adv --keyserver pgp.mit.edu --recv-keys 8C718D3B5072E1F5
-
 # Install apt-installable dependencies.
-RUN apt-get update && apt-get -y install --no-install-recommends \
+RUN apt-get update && apt-get -y install \
     file \
     gcc \
     g++ \
     libffi-dev \
     libgeos-dev \
-    libmysqlclient-dev \
+    default-libmysqlclient-dev \
     libpng-dev \
     libprotobuf-dev \
     libspatialindex-dev \
@@ -50,33 +45,35 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
 # Install dependencies.
 COPY ./docker.make /app/
 COPY ./vendor /app/vendor/
-RUN make -f docker.make build_deps
 
-# Install Python libraries.
-COPY ./requirements/*.txt /app/requirements/
-RUN make -f docker.make build_python_deps
-
-# Install the application code.
-COPY . /app
-RUN make -f docker.make build_ichnaea
-
-# Run a couple checks to see if things got installed correctly.
-RUN make -f docker.make build_check
-
-# The app user only needs write access to very few places.
-RUN chown app:app . && \
-    chown -R app:app /app/docs/ && \
-    chown -R app:app /app/ichnaea/ && \
-    chown -R app:app /app/conf/
-
-# This volume is only used while building docs and making those
-# available in the git repo, so they can be committed.
-VOLUME /app/docs/build/html
-
-# This volume is only used in local testing of the datamaps rendering
-# functionality.
-VOLUME /app/ichnaea/content/static/tiles
-
-# Define the default web server port.
-EXPOSE 8000
-USER app
+# TODO: re-enable all this stuff
+## RUN make -f docker.make build_deps
+## 
+## # Install Python libraries.
+## COPY ./requirements/*.txt /app/requirements/
+## RUN make -f docker.make build_python_deps
+## 
+## # Install the application code.
+## COPY . /app
+## RUN make -f docker.make build_ichnaea
+## 
+## # Run a couple checks to see if things got installed correctly.
+## RUN make -f docker.make build_check
+## 
+## # The app user only needs write access to very few places.
+## RUN chown app:app . && \
+##     chown -R app:app /app/docs/ && \
+##     chown -R app:app /app/ichnaea/ && \
+##     chown -R app:app /app/conf/
+## 
+## # This volume is only used while building docs and making those
+## # available in the git repo, so they can be committed.
+## VOLUME /app/docs/build/html
+## 
+## # This volume is only used in local testing of the datamaps rendering
+## # functionality.
+## VOLUME /app/ichnaea/content/static/tiles
+## 
+## # Define the default web server port.
+## EXPOSE 8000
+## USER app
