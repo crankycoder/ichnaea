@@ -5,3 +5,4 @@
 *.sublime-*
 docs/build/doctrees/
 ichnaea/content/static/tiles/
+virtual_env
